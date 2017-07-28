@@ -1,0 +1,69 @@
+{
+  "init_cmd": "export PEPPER_IP=localhost; export TMAP=~/spqrel/spqrel_launch/worktree/spqrel_tools/maps/nagoya/nagoya_expanded.tpg; export MAP=~/spqrel/spqrel_launch/worktree/spqrel_tools/maps/nagoya/nagoya_expanded.yaml; source ~/spqrel/spqrel_launch/worktree/spqrel_tools/setup-dev.bash /opt/naoqi; source ~/spqrel/spqrel_launch/setup.bash; $SPQREL_HOME/worktree/spqrel_tools/scripts/config_manager.py --file $SPQREL_CONFIG",
+  "windows": [
+    {
+      "name": "bash",
+      "panes": [
+        "bash"
+      ]
+    },
+    {
+      "name": "htop",
+      "panes": [
+        "htop"
+      ]
+    },
+    {
+      "name": "navigation",
+      "panes": [
+        "#cd $SPQREL_HOME/bin; ./pepper_localizer --map $MAP --initial_pose_x 0 --initial_pose_y 0 --initial_pose_theta 0",
+        "#sleep 5; cd $SPQREL_HOME/bin; ./pepper_planner --map $MAP",
+        "sleep 5; cd $SPQREL_HOME/worktree/spqrel_navigation/src/topological_navigation/scripts/; ./topological_navigation.py --fake --tmap $TMAP"
+      ]
+    },
+    {
+      "name": "speech",
+      "panes": [
+        "cd $SPQREL_HOME/slu4p; python speech_to_text/local_speech_recognition.py -v resources/nuance_grammar.txt -k resources/google_keys.txt",
+        "sleep 3; cd $SPQREL_HOME/slu4p; python speech_reranking/reranker.py --noun-dictionary resources/noun_dictionary.txt --verb-dictionary resources/verb_dictionary.txt --nuance-grammar resources/nuance_grammar.txt",
+        "sleep 6; cd $SPQREL_HOME/slu4p; python dialogue_management/dialogue_manager.py -a resources/aiml_kbs/spqrel/gpsr",
+        "sleep 9; cd $SPQREL_HOME/slu4p; python text_to_speech/text_to_speech.py"
+      ]
+    },
+    {
+      "name": "slu4p",
+      "panes": [
+        "sleep 12; cd $SPQREL_HOME/slu4p; python language_understanding/language_understanding.py -l $LU4R_IP -o 9001"
+      ]
+    },
+    {
+      "name": "pnp",
+      "panes": [
+        "cd $SPQREL_HOME; bin/pnp_naoqi",
+        "cd $SPQREL_HOME/actions; python init_actions.py"
+      ]
+    },
+    {
+      "name": "ui",
+      "panes": [
+        "cd $SPQREL_HOME/worktree/spqrel_tools/ui; python ./spqrel_ui.py",
+        "cd $SPQREL_HOME/worktree/robot_blockly; python scripts/pywebserver.py",
+        "cd $SPQREL_HOME/worktree/robot_blockly; python scripts/robot_blockly_backend.py"
+      ]
+    },
+    {
+      "name": "dataset",
+      "panes": [
+        "cd $SPQREL_HOME/worktree/spqrel_tools/naoqibag; python ./naoqibag.py --pause True --rate 5 --keys all.key --path $SPQREL_HOME/ --o keys.log"
+      ]
+    },
+    {
+      "name": "task_start",
+      "panes": [
+        "#cd $SPQREL_HOME/actions; ./action_cmd.py -a   -p   -c start",
+        "#cd $SPQREL_HOME/plans; ./run_plan.py"
+      ]
+    }
+
+  ]
+}

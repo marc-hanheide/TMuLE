@@ -1,0 +1,18 @@
+{
+  "init_cmd": "source ~/spqrel/spqrel_launch/setup.bash; source ~/spqrel/spqrel_launch/worktree/spqrel_tools/setup-dev.bash /opt/naoqi; sleep 3",
+  "windows": [
+    {
+      "name": "bash",
+      "panes": [
+        "bash"
+      ]
+    },
+    {
+      "name": "sysmon",
+      "panes": [
+        "htop",
+        "top"
+      ]
+    }
+  ]
+}
