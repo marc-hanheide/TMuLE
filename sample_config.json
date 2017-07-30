@@ -8,10 +8,17 @@
       ]
     },
     {
-      "name": "sysmon",
+      "name": "htop",
       "panes": [
-        "htop",
-        "top"
+        "htop"
+      ]
+    },
+    {
+      "name": "navigation",
+      "panes": [
+        "pepper_localizer",
+        "pepper_planner",
+        "htop"
       ]
     }
   ]

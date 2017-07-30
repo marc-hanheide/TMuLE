@@ -278,12 +278,12 @@ class TMux:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str,
-                        default='sample_config.json',
+                        default='spqrel-pepper-config.json',
                         help="JSON config file. see sample-config.json. Default: spqrel-pepper-config.json")
     parser.add_argument("--init", type=bool, default=True,
                         help="Should tmux be initialised? Default: True")
     parser.add_argument("--session", type=str,
-                        default='tmule',
+                        default='spqrel',
                         help="The session that is controlled. Default: spqrel")
 
     subparsers = parser.add_subparsers(dest='cmd',
