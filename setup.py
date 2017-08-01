@@ -5,7 +5,12 @@ VERSION = '0.0.1'
 setup(
     name='tmule',
     packages=find_packages(),
-    scripts=['tmule.py'],
+    entry_points={
+    'console_scripts': [
+        'tmule=tmule:main',
+		    ],
+		},
+    #scripts=['tmule.py'],
     version=VERSION,
     install_requires=['webnsock'],
     description='The TMux Launch Engine',
@@ -14,7 +19,7 @@ setup(
     url='https://github.com/marc-hanheide/TMuLe',
     download_url='https://github.com/marc-hanheide/TMuLe/archive/%s.tar.gz'
         % VERSION,  # I'll explain this in a second
-    keywords=['web.py', 'websockets', 'webserver', 'tmux'],
+    keywords=['webnsock', 'libtmux'],
     classifiers=[],
     include_package_data=True,
     zip_safe=False

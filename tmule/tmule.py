@@ -191,35 +191,39 @@ class TMux:
         return len(pids) > 0
 
     def _server(self):
-        from ui import webnsock
+        import webnsock
         import web
 
         tmux_self = self
 
-        class TMuxWebServer(webnsock.ControlServer):
+        class TMuxWebServer(webnsock.WebServer):
 
             def __init__(self):
 
-                webnsock.ControlServer.__init__(self)
-
-                TEMPLATE_DIR = path.realpath(
+                webnsock.WebServer.__init__(
+                    self,
                     path.join(
                         path.dirname(__file__),
-                        'www'
+                        'www/test'
                     )
                 )
-                print TEMPLATE_DIR, __file__
 
-                os.chdir(TEMPLATE_DIR)
+                self._render = web.template.render(
+                    path.realpath(
+                        path.join(
+                            path.dirname(__file__),
+                            'www'
+                        )
+                    ),
+                    base="base", globals=globals())
 
-                render = web.template.render(TEMPLATE_DIR,
-                                             base='base', globals=globals())
+                self_app = self
 
                 class Index(self.page):
                     path = '/'
 
                     def GET(self):
-                        return render.index(tmux_self.config)
+                        return self_app._render.index(tmux_self.config)
 
         class TMuxWSProtocol(webnsock.JsonWSProtocol):
 
@@ -273,9 +277,7 @@ class TMux:
         self.backend.talker(port=9998)
 
 
-
-
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str,
                         default='spqrel-pepper-config.json',
@@ -374,3 +376,7 @@ if __name__ == "__main__":
     # #sleep(8)
     # tmux.stop_all_windows()
     # tmux.terminate()
+
+
+if __name__ == "__main__":
+    main()
