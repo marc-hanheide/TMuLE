@@ -21,7 +21,7 @@ sys.path.append(os.path.abspath(
 
 class TMux:
 
-    def __init__(self, session_name="spqrel", configfile=None):
+    def __init__(self, session_name="tmule", configfile=None):
         if configfile:
             self.load_config(configfile)
         else:
