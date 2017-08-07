@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 
 setup(
     name='tmule',
@@ -13,7 +13,7 @@ setup(
 		},
     #scripts=['tmule.py'],
     version=VERSION,
-    install_requires=['webnsock'],
+    install_requires=['webnsock', 'libtmux'],
     description='The TMux Launch Engine',
     author='Marc Hanheide',
     author_email='marc@hanheide.net',
