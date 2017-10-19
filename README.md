@@ -10,7 +10,7 @@ To simply control [tmux](https://github.com/tmux/tmux/wiki) sessions to deploy p
 
 ## Configuration File
 
-The configuration file uses JSON format.
+The configuration file uses YAML format.
 
 * an `init_cmd` can be defined which is executed in each *pane before* the actual command is run.
 * the `windows` are a list of individual windows that will be created in the tmux session. Each corresponds to one sub-system. 
