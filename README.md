@@ -2,7 +2,7 @@
 
 ## What is TMuLE for?
 
-To simply control [tmux](https://github.com/tmux/tmux/wiki) sessions to deploy pre-configured software system very easily. All it needs is a configuration file (in JSON) and different sub-systems (defined as different windows in a joint tmux sessions) can be launch and stopped conveniently.
+To simply control [tmux](https://github.com/tmux/tmux/wiki) sessions to deploy pre-configured software system very easily. All it needs is a configuration file (in YAML) and different sub-systems (defined as different windows in a joint tmux sessions) can be launch and stopped conveniently.
 
 ## Concepts
 
@@ -17,34 +17,7 @@ The configuration file uses JSON format.
 * Each window is given a `name`, and a list of `panes`
 * the entries in the `panes` list, are shell scripts commands that are executed *as is* in the tmux session shell (i.e. *bash*)
 
-Here is an example `sample.json`:   
-
-```json
-{
-  "init_cmd": "source ~/spqrel/spqrel_launch/setup.bash; source ~/spqrel/spqrel_launch/worktree/spqrel_tools/setup-dev.bash /opt/naoqi; sleep 3",
-  "windows": [
-    {
-      "name": "bash",
-      "panes": [
-        "bash"
-      ]
-    },
-    {
-      "name": "htop",
-      "panes": [
-        "htop"
-      ]
-    },
-    {
-      "name": "navigation",
-      "panes": [
-        "pepper_localizer",
-        "pepper_planner"
-      ]
-    }
-  ]
-}
-```
+For an example look at [`tmule.yaml`](https://github.com/marc-hanheide/TMuLE/blob/master/tmule.yaml).
 
 ## Usage
 
@@ -81,41 +54,41 @@ Note: If you are using the default config file, you can obviously skip using the
 
 * list the windows in the tmux session:
 
-  `tmux --config sample.json list`
+  `tmux --config tmule.yaml list`
 
   If the `init` option is not explicitly set to `False` this will create (or attach to) the default (`spqrel`) tmux session, and will make sure that all the windows that are configured and required panes are created. 
 
 * launch one specific window (sub-system):
 
-  `tmux -config sample.json launch -w navigation`
+  `tmux -config tmule.yaml launch -w htop`
 
-  This will launch all the configured commands in the `navigation` window in their two respective panes.
+  This will launch all the configured commands in the `htop` window in their two respective panes.
 
 * stop the processes of a window (sub-system):
 
-	`tmux -config sample.json stop -w navigation`
+	`tmux -config tmule.yaml stop -w htop`
 
-	This command will send `Ctrl-C` to all the panes of the `navigation` window, and hence stop all the processes in there. 
+	This command will send `Ctrl-C` to all the panes of the `htop` window, and hence stop all the processes in there. 
 
 * kill the processes of a window (sub-system):
 
 	`tmux -config sample.json kill -w navigation`
 
-	This command will send `Ctrl-C` to all the panes of the `navigation` window just like `stop` would do, but follows this with a proper `kill -9` for all child processes to make sure everything is sure and properly gone. It will also close the respective window in the session. 
+	This command will send `Ctrl-C` to all the panes of the `htop` window just like `stop` would do, but follows this with a proper `kill -9` for all child processes to make sure everything is sure and properly gone. It will also close the respective window in the session. 
 
 * if in any of the above commands, now window is specified (no `-w` or `--window` option given), the command will apply to *ALL* configured windows (sub-systems), e.g.
 
-	`tmux -config sample.json launch`
+	`tmux -config tmule.yaml launch`
 
 	will launch all processes
 
-	`tmux -config sample.json kill`
+	`tmux -config tmule.yaml kill`
 
 	will shut everything down and in fact close the tmux session
 
 * Manual interaction with the tmux session:
 
-	`tmux a -t sqprel`
+	`tmux a -t tmule`
 
 	This will attach to the default TMuLE session, allwoing manual inspection and interaction with the session (e.g. watching the output of the individual processes, or even starting and stopping them manually)
 
