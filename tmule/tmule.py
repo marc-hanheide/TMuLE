@@ -233,6 +233,14 @@ class TMux:
                     def GET(self):
                         return self_app._render.index(tmux_self.config)
 
+                class Log(self.page):
+                    path = '/log'
+
+                    def GET(self):
+                        lines = tmux_self.server.cmd(
+                            'capture-pane', '-p', '-C', '-S', '-100000').stdout
+                        return '\n'.join(lines)
+
         class TMuxWSProtocol(webnsock.JsonWSProtocol):
 
             def __init__(self):
