@@ -1,13 +1,14 @@
 #! /usr/bin/env python
 from libtmux import Server
-from json import load
-from logging import error, warn, info, debug, basicConfig, INFO, WARN
+from yaml import load
+from logging import error, warn, info, debug, basicConfig, INFO, WARN, DEBUG
 from pprint import pformat, pprint
 from time import sleep
 import signal
 import os
 from os import path
 import argparse
+from subprocess import call
 from psutil import Process, wait_procs
 import sys
 
@@ -66,17 +67,18 @@ class TMux:
                 )
 
             for win in self.config['windows']:
+                print win, "***", self.config['windows']
                 window = self.session.find_where({
                     "window_name": win['name']
                 })
                 if window:
-                    debug('window %s already exists' % win['name'])
+                    info('window %s already exists' % win['name'])
                 else:
-                    debug('create window %s' % win['name'])
+                    info('create window %s' % win['name'])
                     window = self.session.new_window(win['name'])
                 exist_num_panes = len(window.list_panes())
                 while exist_num_panes < len(win['panes']):
-                    debug('new pane needed in window %s' % win['name'])
+                    info('new pane needed in window %s' % win['name'])
                     window.split_window(vertical=1)
                     exist_num_panes = len(window.list_panes())
                 window.cmd('select-layout', 'tiled')
@@ -134,6 +136,7 @@ class TMux:
     def kill_all_windows(self):
         for winconf in self.config['windows']:
             self.kill_window(winconf['name'])
+        self.server.kill_session(self.session_name)
 
     def stop_window(self, window_name):
         info('stop %s' % window_name)
@@ -188,7 +191,16 @@ class TMux:
     def is_running(self, window_name):
         winconf, window = self.find_window(window_name)
         pids = self._get_children_pids_window(window)
-        return len(pids) > 0
+        if len(pids) < 1:
+            return False
+        if 'check' in winconf:
+            info('need to run check command')
+            if call(winconf['check'], shell=True) == 0:
+                return True
+            else:
+                return False
+        else:
+            return True
 
     def _server(self):
         import webnsock
@@ -201,11 +213,7 @@ class TMux:
             def __init__(self):
 
                 webnsock.WebServer.__init__(
-                    self,
-                    path.join(
-                        path.dirname(__file__),
-                        'www/test'
-                    )
+                    self
                 )
 
                 self._render = web.template.render(
@@ -266,7 +274,7 @@ class TMux:
 
                 #return {'button_outcome': True}
 
-        self.webserver = webnsock.Webserver(TMuxWebServer(), port=9999)
+        self.webserver = webnsock.WebserverThread(TMuxWebServer(), port=9999)
         self.backend = webnsock.WSBackend(TMuxWSProtocol)
 
         signal.signal(
@@ -280,13 +288,13 @@ class TMux:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str,
-                        default='spqrel-pepper-config.json',
-                        help="JSON config file. see sample-config.json. Default: spqrel-pepper-config.json")
+                        default='tmule.yaml',
+                        help="YAML config file. see sample-config.yaml. Default: tmule.yaml")
     parser.add_argument("--init", type=bool, default=True,
                         help="Should tmux be initialised? Default: True")
     parser.add_argument("--session", type=str,
-                        default='spqrel',
-                        help="The session that is controlled. Default: spqrel")
+                        default='tmule',
+                        help="The session that is controlled. Default: tmule")
 
     subparsers = parser.add_subparsers(dest='cmd',
                                        help='sub-command help')
@@ -323,7 +331,7 @@ def main():
 
     args = parser.parse_args()
 
-    tmux = TMux(configfile=args.config)
+    tmux = TMux(session_name=args.session, configfile=args.config)
 
     if (args.init):
         tmux.init()

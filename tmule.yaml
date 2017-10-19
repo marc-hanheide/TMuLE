@@ -1,0 +1,16 @@
+init_cmd: |
+  export TMULE=1
+  date
+  sleep 1
+windows: 
+  - name: bash
+    panes: 
+      - bash
+    check: /usr/bin/true
+  - name: htop
+    panes:
+      - htop
+  - name: test
+    panes:
+    - echo $TMULE
+    - top

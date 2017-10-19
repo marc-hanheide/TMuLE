@@ -1,10 +1,12 @@
 $def with (config)
 $var title: Dashboard
-$var jsfiles: static/js/main.js
+$var jsfiles: 
 
 <script>
 document.onready = function() {
-    init();
+    var host_name = window.location.hostname;
+    uri = "ws://" + host_name + ":9998";
+    webnsock_init(uri);
 }
 
 function check() {
@@ -62,12 +64,14 @@ function _update_status(payload) {
                                         'id': '',
                                         'cmd': 'stop'
                                         });">Stop All</button>                        
-                            <button type="button" class="btn-lg btn btn-danger" 
+
+<!--                             <button type="button" class="btn-lg btn btn-danger" 
                                     onclick="send({
                                         'method':'button', 
                                         'id': '',
                                         'cmd': 'terminate'
-                                        });">Terminate</button>                       
+                                        });">Terminate</button>
+ -->
                         </div>
                     </div>
                 </div>
