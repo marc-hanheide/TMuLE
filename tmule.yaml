@@ -5,7 +5,9 @@ init_cmd: |
 windows: 
   - name: bash
     panes: 
-      - bash
+      - |
+        date
+        bash -c "sh"
     check: /usr/bin/true
   - name: htop
     panes:
