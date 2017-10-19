@@ -4,6 +4,8 @@ import logging
 import exc
 import formats
 from _compat import console_to_str
+from pprint import pprint
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -93,7 +95,6 @@ class tmux_cmd(object):
 
         cmd = []
         if host:
-            print "use host"
             cmd += ['ssh']
             cmd += ['-t']
             cmd += [host]
@@ -145,31 +146,39 @@ class tmux_cmd(object):
 class TMux():
     def __init__(self, host=None):
         self.host = host
-        pass
+        self.windows = {}
+        self.panes = {}
+
 
     def tmux(self, *args):
         return tmux_cmd(*args, host=self.host)
 
     def has_session(self, session):
         t = self.tmux('has-session', '-t', session)
-        if t.returncode > 0:
-            raise exc.LibTmuxException('failed')
         return t.returncode == 0
 
     def ensure_session(self, session):
         if not self.has_session(session):
-            self.tmux('new-session', '-d', '-s', session)
+            self.tmux(
+                'new-session', '-d',
+                '-s', session,
+                '-n', "__init__")
+            self.tmux(
+                'set-option',
+                'history-limit', '100000')
 
-    def list_windows(self, session):
+    def list_windows(self):
+        self.ensure_session('__tmule-control__')
         wformats = ['session_name', 'session_id'] + formats.WINDOW_FORMATS
         tmux_formats = ['#{%s}' % format for format in wformats]
         t = self.tmux(
-            'list-windows', '-t', session,
+            'list-windows', '-a',
             '"-F%s"' % '\t'.join(tmux_formats)
             )
-        logger.info(t.stdout)
+        #logger.info(t.stdout)
         if t.returncode > 0:
-            raise exc.LibTmuxException('failed')
+            #return {}
+            raise exc.LibTmuxException(t.stdout)
         windows = t.stdout
         windows = [
             dict(zip(
@@ -183,16 +192,116 @@ class TMux():
             '%s:%s' %
             (w['session_name'], w['window_name']): w for w in windows}
 
+        self.windows = win_ids
         return win_ids
 
-    def has_windows(self, window):
-        pass
+    def has_window(self, window, check=False):
+        if len(self.windows) == 0 or check:
+            self.list_windows()
+        return window in self.windows
+
+    def ensure_window(self, window):
+        if not self.has_window(window, True):
+            comp = window.split(':')
+            logger.info(
+                'new window %s in session %s' %
+                (comp[1], comp[0]))
+            self.ensure_session(comp[0])
+            self.tmux(
+                'new-window', '-a',
+                '-n', comp[1],
+                '-t', comp[0])
+
+    def list_panes(self):
+        self.ensure_session('__tmule-control__')
+        pformats = ['session_name',
+                    'session_id', 'window_name'
+                    ] + formats.PANE_FORMATS
+        tmux_formats = ['#{%s}' % format for format in pformats]
+        t = self.tmux(
+            'list-panes', '-a',
+            '"-F%s"' % '\t'.join(tmux_formats)
+            )
+        if t.returncode > 0:
+            raise exc.LibTmuxException(t.stdout)
+        panes = t.stdout
+        panes = [
+            dict(zip(
+                 pformats, window.split('\t'))) for window in panes]
+
+        # clear up empty dict
+        panes = [
+            dict((k, v) for k, v in window.items() if v) for window in panes
+        ]
+        pane_ids = {
+            '%s:%s.%s' %
+            (w['session_name'],
+                w['window_name'], w['pane_index']): w for w in panes}
+
+        self.panes = pane_ids
+        return pane_ids
+
+    def has_pane(self, pane, check=False):
+        if len(self.windows) == 0 or check:
+            self.list_panes()
+        return pane in self.panes
+
+    def ensure_pane(self, pane):
+        while not self.has_pane(pane, True):
+            comp = pane.split(':')
+            logger.info(
+                'new pane in window %s in session %s' %
+                (comp[1], comp[0]))
+            # p = int(comp[1].split('.')[1])
+            win = comp[1].split('.')[0]
+            self.ensure_window(comp[0] + ':' + win)
+            self.tmux(
+                'split-window',
+                '-t', comp[0] + ':' + win)
+            self.tmux(
+                'select-layout',
+                '-t', comp[0] + ':' + win,
+                'tiled')
+
+    def send_keys(self, pane, keys, enter=False):
+        self.ensure_pane(pane)
+        if enter:
+            self.tmux(
+                'send-keys',
+                '-t', pane,
+                '\'' + keys + '\' C-m')
+        else:
+            self.tmux(
+                'send-keys',
+                '-t', pane,
+                '\'' + keys + '\'')
+
+    def send_ctrlc(self, pane):
+        datestr = datetime.now().strftime('%c')
+        self.tmux(
+            'send-keys',
+            '-t', pane,
+            '""', 'C-c')
+        self.tmux(
+            'send-keys',
+            '-t', pane,
+            '""', 'C-c')
+        self.tmux(
+            'send-keys',
+            '-t', pane,
+            '""', 'C-c')
+        self.send_keys(pane, '# tmux-controller sent Ctrl-C at %s' % datestr,
+                       enter=True)
 
 if __name__ == "__main__":
     t = TMux('localhost')
-    t.ensure_session('hurga')
-    wid = t.list_windows('hurga')
-    print wid
+    t.ensure_window('1stsession:win1')
+    t.ensure_window('1stsession:win2')
+    t.send_keys('2ndsession:win1.4', 'ls -l', enter=True)
+    t.send_ctrlc('2ndsession:win1.4')
+
+    wid = t.list_panes()
+    pprint(wid)
     #c = tmux_cmd('new-session', '-d', '-s', 'hurga', host="localhost")
     #print "RETURN: %d" % c.returncode
     #print "STDERR: %s" % c.stderr
