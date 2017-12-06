@@ -89,7 +89,7 @@ class TMux:
                 window = self.session.find_where({
                     "window_name": win['name']
                 })
-                window.select_window()
+                #window.select_window()
                 return win, window
 
     def send_ctrlc(self, pane):
