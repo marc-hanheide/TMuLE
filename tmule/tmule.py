@@ -59,7 +59,7 @@ class TMux:
                     "session_name": self.session_name
                 })
 
-                info('found running session %s on server' % self.session_name)
+                debug('found running session %s on server' % self.session_name)
             else:
                 info('starting new session %s on server' % self.session_name)
                 self.session = self.server.new_session(
@@ -67,12 +67,12 @@ class TMux:
                 )
 
             for win in self.config['windows']:
-                print win, "***", self.config['windows']
+                # print win, "***", self.config['windows']
                 window = self.session.find_where({
                     "window_name": win['name']
                 })
                 if window:
-                    info('window %s already exists' % win['name'])
+                    debug('window %s already exists' % win['name'])
                 else:
                     info('create window %s' % win['name'])
                     window = self.session.new_window(win['name'])
@@ -106,7 +106,8 @@ class TMux:
         pane_no = 0
         datestr = datetime.now().strftime('%c')
         for cmd in winconf['panes']:
-            pane = window.select_pane(pane_no)
+            pane = window.select_pane('%%%d' % (pane_no + 1))
+            debug('pane: %d -> %s' % (pane_no, pane))
             self.send_ctrlc(pane)
             pane.send_keys('# tmux-controller starts new command %s' % datestr,
                            enter=True, suppress_history=True)
@@ -146,7 +147,7 @@ class TMux:
     def _stop_window(self, winconf, window):
         pane_no = 0
         for cmd in winconf['panes']:
-            pane = window.select_pane(pane_no)
+            pane = window.select_pane('%%%d' % (pane_no + 1))
             self.send_ctrlc(pane)
             pane_no += 1
         pids = self._get_pids_window(window)
@@ -194,7 +195,7 @@ class TMux:
         if len(pids) < 1:
             return False
         if 'check' in winconf:
-            info('need to run check command')
+            debug('need to run check command')
             if call(winconf['check'], shell=True) == 0:
                 return True
             else:
@@ -247,7 +248,7 @@ class TMux:
                 super(TMuxWSProtocol, self).__init__()
 
             def on_button(self, payload):
-                info('button pressed: \n%s' % pformat(payload))
+                debug('button pressed: \n%s' % pformat(payload))
                 window_name = payload['id']
                 cmd = payload['cmd']
                 if cmd == 'launch':
@@ -269,7 +270,7 @@ class TMux:
                 self.sendJSON(self.on_status())
 
             def on_status(self, payload=None):
-                info('status-requested: ')
+                debug('status-requested: ')
 
                 res = {
                     'windows': {},
