@@ -11,6 +11,7 @@ import argparse
 from subprocess import call
 from psutil import Process, wait_procs
 import sys
+from loader import Loader
 
 from datetime import datetime
 basicConfig(level=INFO)
@@ -47,7 +48,7 @@ class TMux:
 
     def load_config(self, filename="sample_config.json"):
         with open(filename) as data_file:
-            self.config = load(data_file)
+            self.config = load(data_file,Loader)
 
     def init(self):
         if not self.config:
