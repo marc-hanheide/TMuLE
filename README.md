@@ -93,3 +93,16 @@ Note: If you are using the default config file, you can obviously skip using the
 	This will attach to the default TMuLE session, allwoing manual inspection and interaction with the session (e.g. watching the output of the individual processes, or even starting and stopping them manually)
 
 	Use `Ctrl-b d` to detach from the session again, or `Ctrl-b w` to switch between different windows. 
+
+
+# Releasing to PyPi
+
+1. edit `setup.py` to bump up version string
+1. create a tag (not strictly needed, but good practice): 
+    ```
+    git commit -a && git tag `grep "VERSION =" setup.py | sed "s/VERSION = '\([0-9\.]*\)'/\1/"` 
+    git push --tags
+    ```
+1. clean dist directory `rm -r dist/*`
+1. build dist `python setup.py sdist`
+1. upload `twine upload dist/*`
