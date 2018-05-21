@@ -1,0 +1,21 @@
+# Sensor drivers, and parameters
+  - name: drivers
+    panes: 
+      - echo "roslaunch TODO cititruck.launch reflex:=true kinect2:=false"
+      - echo "rosparam load $(rospack find robot_config_package)/config/$ROBOT_ID/$ROBOT_ID_config.yaml"    
+# planning      
+  - name: planning
+    panes:
+      - echo "roslaunch TODO planning.launch prefix:=$ROBOT_ID"
+# manipulation      
+  - name: manipulation
+    panes:
+      - echo "roslaunch TODO manipulation.launch prefix:=$ROBOT_ID"
+# localization      
+  - name: localization
+    panes:
+      - echo "roslaunch TODO localization.launch prefix:=$ROBOT_ID"
+# trackers, detectors
+  - name: perception
+    panes: 
+      - echo "roslaunch TODO perception.launch prefix:=$ROBOT_ID"
