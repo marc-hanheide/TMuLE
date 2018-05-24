@@ -3,12 +3,12 @@ init_cmd: |
   date
   sleep 1
 windows: 
-  - name: bash
+  - name: date+sh
     panes: 
       - |
         date
         bash -c "sh"
-    check: /usr/bin/true
+    check: /bin/true
   - name: htop
     panes:
       - htop
