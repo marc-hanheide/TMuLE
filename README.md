@@ -21,11 +21,11 @@ For an example look at [`tmule.yaml`](https://github.com/marc-hanheide/TMuLE/blo
 
 ## Usage
 
-Just run `tmux.py -h`, output whould be something like this:
+Just run `tmule -h`, output whould be something like this:
 
 
 ```
-usage: tmux.py [-h] [--config CONFIG] [--init INIT] [--session SESSION]
+usage: tmule [-h] [--config CONFIG] [--init INIT] [--session SESSION]
                {list,launch,stop,relaunch,terminate,server,pids,running} ...
 
 positional arguments:
@@ -54,7 +54,7 @@ Note: If you are using the default config file, you can obviously skip using the
 
 * list the windows in the tmux session:
 
-  `tmux --config tmule.yaml list`
+  `tmule --config tmule.yaml list`
 
   If the `init` option is not explicitly set to `False` this will create (or attach to) the default (`spqrel`) tmux session, and will make sure that all the windows that are configured and required panes are created. 
 
@@ -66,23 +66,23 @@ Note: If you are using the default config file, you can obviously skip using the
 
 * stop the processes of a window (sub-system):
 
-	`tmux -config tmule.yaml stop -w htop`
+	`tmule -config tmule.yaml stop -w htop`
 
 	This command will send `Ctrl-C` to all the panes of the `htop` window, and hence stop all the processes in there. 
 
 * kill the processes of a window (sub-system):
 
-	`tmux -config sample.json kill -w navigation`
+	`tmule -config sample.json kill -w navigation`
 
 	This command will send `Ctrl-C` to all the panes of the `htop` window just like `stop` would do, but follows this with a proper `kill -9` for all child processes to make sure everything is sure and properly gone. It will also close the respective window in the session. 
 
 * if in any of the above commands, now window is specified (no `-w` or `--window` option given), the command will apply to *ALL* configured windows (sub-systems), e.g.
 
-	`tmux -config tmule.yaml launch`
+	`tmule -config tmule.yaml launch`
 
 	will launch all processes
 
-	`tmux -config tmule.yaml kill`
+	`tmule -config tmule.yaml kill`
 
 	will shut everything down and in fact close the tmux session
 
