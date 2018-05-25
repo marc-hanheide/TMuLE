@@ -107,7 +107,7 @@ class TMux:
         pane_no = 0
         datestr = datetime.now().strftime('%c')
         for cmd in winconf['panes']:
-            pane = window.select_pane('%%%d' % (pane_no + 1))
+            pane = window.select_pane('%s.%d' % (window_name, pane_no))
             debug('pane: %d -> %s' % (pane_no, pane))
             self.send_ctrlc(pane)
             pane.send_keys('# tmux-controller starts new command %s' % datestr,
@@ -137,7 +137,11 @@ class TMux:
 
     def kill_all_windows(self):
         for winconf in self.config['windows']:
-            self.kill_window(winconf['name'])
+            try:
+                self.kill_window(winconf['name'])
+            except Exception as e:
+                warn('There was an exception shutting down, carrying on regardless: %s'
+                     % str(e))
         self.server.kill_session(self.session_name)
 
     def stop_window(self, window_name):
@@ -148,7 +152,7 @@ class TMux:
     def _stop_window(self, winconf, window):
         pane_no = 0
         for cmd in winconf['panes']:
-            pane = window.select_pane('%%%d' % (pane_no + 1))
+            pane = window.select_pane('%s.%d' % (window.name, pane_no))
             self.send_ctrlc(pane)
             pane_no += 1
         pids = self._get_pids_window(window)
@@ -297,12 +301,12 @@ class TMux:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str,
+    parser.add_argument("--config", '-c', type=str,
                         default='tmule.yaml',
                         help="YAML config file. see sample-config.yaml. Default: tmule.yaml")
-    parser.add_argument("--init", type=bool, default=True,
+    parser.add_argument("--init", '-i', type=bool, default=True,
                         help="Should tmux be initialised? Default: True")
-    parser.add_argument("--session", type=str,
+    parser.add_argument("--session", '-s', type=str,
                         default='tmule',
                         help="The session that is controlled. Default: tmule")
 
