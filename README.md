@@ -47,6 +47,7 @@ optional arguments:
                         spqrel-pepper-config.json
   --init INIT           Should tmux be initialised? Default: True
   --session SESSION     The session that is controlled. Default: spqrel```
+```
 
 ### Typical usage (corresponding to the `sample.json` file above)
 
