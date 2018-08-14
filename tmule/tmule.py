@@ -12,7 +12,7 @@ from subprocess import call
 from psutil import Process, wait_procs
 import sys
 from loader import Loader
-
+from threading import Thread
 from datetime import datetime
 basicConfig(level=INFO)
 
@@ -23,24 +23,27 @@ sys.path.append(os.path.abspath(
 
 class TMux:
 
-    def __init__(self, session_name="tmule", configfile=None):
+    def __init__(self, session_name="tmule", configfile=None, sleep_sec=1.0):
         if configfile:
             self.load_config(configfile)
         else:
             self.config = None
         self.session_name = session_name
+        self.sleep_sec = sleep_sec
 
     def _on_terminate(self, proc):
         info("process {} terminated with exit code {}"
              .format(proc, proc.returncode))
 
     def _terminate(self, pid):
-        procs = Process(pid).children()
+        procs = Process(pid).children(recursive=True)
         for p in procs:
+            info("trying to terminate %s" % p)
             p.terminate()
         gone, still_alive = wait_procs(procs, timeout=1,
                                        callback=self._on_terminate)
         for p in still_alive:
+            info("killing %s" % p)
             p.kill()
 
     def _get_children_pids(self, pid):
@@ -122,6 +125,7 @@ class TMux:
     def launch_all_windows(self):
         for winconf in self.config['windows']:
             self.launch_window(winconf['name'])
+            sleep(self.sleep_sec)
 
     def stop_all_windows(self):
         for winconf in self.config['windows']:
@@ -149,6 +153,14 @@ class TMux:
         winconf, window = self.find_window(window_name)
         self._stop_window(winconf, window)
 
+    def __pids_clean_up(self, pids):
+        sleep(1)
+        for p in pids:
+            try:
+                self._terminate(p)
+            except Exception as e:
+                info('exception in termination, can be ignored: %s' % str(e))
+
     def _stop_window(self, winconf, window):
         pane_no = 0
         for cmd in winconf['panes']:
@@ -156,9 +168,9 @@ class TMux:
             self.send_ctrlc(pane)
             pane_no += 1
         pids = self._get_pids_window(window)
-        sleep(.1)
-        for p in pids:
-            self._terminate(p)
+        Thread(target=self.__pids_clean_up, args=(pids,)).start()
+        #for p in pids:
+           #self._terminate(p)
         winconf['_running'] = False
 
     def kill_window(self, window_name):
@@ -167,8 +179,8 @@ class TMux:
 #                       "-F '#{pane_active} #{pane_pid}")
         self._stop_window(winconf, window)
         pids = self._get_pids_window(window)
-        for pid in pids:
-            Process(pid).terminate()
+        sleep(1)
+        Thread(target=self.__pids_clean_up, args=(pids,)).start()
         winconf['_running'] = False
 
     def list_windows(self):
@@ -297,7 +309,8 @@ class TMux:
                 self.webserver, self.backend, s, f))
         self.webserver.start()
         self.backend.talker(port=9998)
-
+        # kill everything when server dies
+        self.kill_all_windows()
 
 def main():
     parser = argparse.ArgumentParser()
@@ -310,6 +323,10 @@ def main():
     parser.add_argument("--session", '-s', type=str,
                         default='tmule',
                         help="The session that is controlled. Default: tmule")
+
+    parser.add_argument("--wait", '-W', type=float,
+                         default=1,
+                         help="Seconds to wait between launching windows. Default: 1.0")
 
     subparsers = parser.add_subparsers(dest='cmd',
                                        help='sub-command help')
@@ -346,7 +363,7 @@ def main():
 
     args = parser.parse_args()
 
-    tmux = TMux(session_name=args.session, configfile=args.config)
+    tmux = TMux(session_name=args.session, configfile=args.config, sleep_sec=args.wait)
 
     if (args.init):
         tmux.init()
@@ -384,9 +401,11 @@ def main():
         tmux._server()
     elif args.cmd == 'pids':
         if args.window == '':
-            print(pformat(tmux.get_children_pids_all_windows()))
+            for p in tmux.get_children_pids_all_windows():
+                print Process(p)
         else:
-            print(pformat(tmux.get_children_pids_window(args.window)))
+            for p in tmux.get_children_pids_window(args.window):
+                print Process(p)
     else:
         error('unknown command %s', args.cmd)
 

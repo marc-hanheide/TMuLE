@@ -7,7 +7,7 @@ windows:
     panes: 
       - |
         date
-        bash -c "sh"
+        bash -c "sh; read"
     check: /bin/true
   - name: htop
     panes:
