@@ -112,6 +112,10 @@ class TMux:
             self.send_ctrlc(pane)
             pane.send_keys('# tmux-controller starts new command %s' % datestr,
                            enter=True, suppress_history=True)
+            # window specific init_cmd
+            if 'init_cmd_%s' %(window_name) in self.config:
+                pane.send_keys(self.config['init_cmd_%s' %(window_name)],
+                               enter=enter, suppress_history=False)
             if 'init_cmd' in self.config:
                 pane.send_keys(self.config['init_cmd'],
                                enter=enter, suppress_history=False)

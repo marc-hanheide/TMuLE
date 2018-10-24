@@ -1,0 +1,39 @@
+---
+init_cmd: |
+  #exec /bin/bash
+  set -o pipefail
+  function export_default () {
+    var_name="$1"
+    var_default="$2"
+    eval $var_name="${!var_name:-$var_default}"
+    export $var_name
+    echo "  $0 -> $var_name=${!var_name}"
+  }
+
+  # search for eth0 tun device:
+  default_iface="lo"
+  default_ip=`ip addr show dev "$default_iface" | grep "inet " | sed 's@ *inet \([0-9\.]*\).*@\1@' || echo 127.0.0.1`
+
+  # set ROS_MASTER to the correct IP
+  export_default ROS_MASTER $default_ip
+  export_default ROS_MASTER_PORT 11311
+  # set ROS_IP not to the IP that we will connect to remotely
+  export_default ROS_IP `ip route get $ROS_MASTER | grep "src" | sed 's/.*src \([0-9\.]*\).*/\1/' || echo $ROS_MASTER`
+  # set ROS_HOSTNAME to the ROS_IP to avoid configuring /etc/hosts for anyone who connects
+  export_default ROS_HOSTNAME "$ROS_IP"
+  export ROS_MASTER_URI="http://$ROS_MASTER:$ROS_MASTER_PORT/"
+init_cmd_coordination: |
+  export ROS_MASTER_PORT=11411
+windows:
+- name: robot
+  panes:
+  - roscore
+  - sleep 3; echo $ROS_MASTER_URI
+  - sleep 3; rostopic pub /test std_msgs/String "robot" -r 3
+  - sleep 3; rostopic echo /test
+- name: coordination
+  panes:
+  - roscore -p $ROS_MASTER_PORT
+  - sleep 3; echo $ROS_MASTER_URI
+  - sleep 3; rostopic pub /test std_msgs/String "coordintaion" -r 3
+  - sleep 3; rostopic echo /test
