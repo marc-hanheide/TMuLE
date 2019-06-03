@@ -16,6 +16,7 @@ The configuration file uses YAML format.
 * the `windows` are a list of individual windows that will be created in the tmux session. Each corresponds to one sub-system. 
 * Each window is given a `name`, and a list of `panes`
 * the entries in the `panes` list, are shell scripts commands that are executed *as is* in the tmux session shell (i.e. *bash*)
+* you can also include other yaml files using the [`!include`](https://stackoverflow.com/questions/528281/how-can-i-include-an-yaml-file-inside-another) statement.
 
 For an example look at [`tmule.yaml`](https://github.com/marc-hanheide/TMuLE/blob/master/tmule.yaml).
 
