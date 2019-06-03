@@ -18,7 +18,7 @@ The configuration file uses YAML format.
 * the entries in the `panes` list, are shell scripts commands that are executed *as is* in the tmux session shell (i.e. *bash*)
 * you can also include other yaml files using the [`!include`](https://stackoverflow.com/questions/528281/how-can-i-include-an-yaml-file-inside-another) statement.
 
-For an example look at [`tmule.yaml`](https://github.com/marc-hanheide/TMuLE/blob/master/tmule.yaml).
+For an example look at [`tmule.yaml`](https://github.com/marc-hanheide/TMuLE/blob/master/tmule.yaml), and [`robot1.yaml`](https://github.com/marc-hanheide/TMuLE/blob/master/robot1.yaml) for an example of `!include`.
 
 ## Usage
 
