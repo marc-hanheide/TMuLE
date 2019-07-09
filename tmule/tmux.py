@@ -10,6 +10,7 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+
 def which(exe=None, default_paths=[
             '/bin', '/sbin', '/usr/bin', '/usr/sbin', '/usr/local/bin'
         ], append_env_path=True):
@@ -148,7 +149,6 @@ class TMux():
         self.host = host
         self.windows = {}
         self.panes = {}
-
 
     def tmux(self, *args):
         return tmux_cmd(*args, host=self.host)
