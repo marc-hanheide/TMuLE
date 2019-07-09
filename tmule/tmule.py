@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 from libtmux import Server
 from yaml import load
-from logging import error, warn, info, debug, basicConfig, INFO, WARN, DEBUG
-from pprint import pformat, pprint
+from logging import error, warn, info, debug, basicConfig, INFO
+from pprint import pformat
 from time import sleep
 import signal
 import os
@@ -48,7 +48,7 @@ class TMux:
 
     def load_config(self, filename="sample_config.json"):
         with open(filename) as data_file:
-            self.config = load(data_file,Loader)
+            self.config = load(data_file, Loader)
 
     def init(self):
         if not self.config:
@@ -90,7 +90,7 @@ class TMux:
                 window = self.session.find_where({
                     "window_name": win['name']
                 })
-                #window.select_window()
+                # window.select_window()
                 return win, window
 
     def send_ctrlc(self, pane):
@@ -107,7 +107,8 @@ class TMux:
         pane_no = 0
         datestr = datetime.now().strftime('%c')
         for cmd in winconf['panes']:
-            pane = window.select_pane('%s:%s.%d' % (window.session.name, window_name, pane_no))
+            pane = window.select_pane('%s:%s.%d' % (
+                window.session.name, window_name, pane_no))
             debug('pane: %d -> %s' % (pane_no, pane))
             self.send_ctrlc(pane)
             pane.send_keys('# tmux-controller starts new command %s' % datestr,
@@ -140,8 +141,9 @@ class TMux:
             try:
                 self.kill_window(winconf['name'])
             except Exception as e:
-                warn('There was an exception shutting down, carrying on regardless: %s'
-                     % str(e))
+                warn(
+                    'There was an exception shutting down, '
+                    'carrying on regardless: %s' % str(e))
         self.server.kill_session(self.session_name)
 
     def stop_window(self, window_name):
@@ -152,7 +154,8 @@ class TMux:
     def _stop_window(self, winconf, window):
         pane_no = 0
         for cmd in winconf['panes']:
-            pane = window.select_pane('%s:%s.%d' % (window.session.name, window.name, pane_no))
+            pane = window.select_pane('%s:%s.%d' % (
+                window.session.name, window.name, pane_no))
             self.send_ctrlc(pane)
             pane_no += 1
         pids = self._get_pids_window(window)
@@ -286,7 +289,7 @@ class TMux:
 
                 return res
 
-                #return {'button_outcome': True}
+                # return {'button_outcome': True}
 
         self.webserver = webnsock.WebserverThread(TMuxWebServer(), port=9999)
         self.backend = webnsock.WSBackend(TMuxWSProtocol)
@@ -303,7 +306,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", '-c', type=str,
                         default='tmule.yaml',
-                        help="YAML config file. see sample-config.yaml. Default: tmule.yaml")
+                        help="YAML config file. see sample-config.yaml. "
+                        "Default: tmule.yaml")
     parser.add_argument("--init", '-i', type=bool, default=True,
                         help="Should tmux be initialised? Default: True")
 
@@ -313,7 +317,7 @@ def main():
 
     subparsers = parser.add_subparsers(dest='cmd',
                                        help='sub-command help')
-    parser_list = subparsers.add_parser('list', help='show windows')
+    subparsers.add_parser('list', help='show windows')
     parser_launch = subparsers.add_parser('launch', help='launch window(s)')
     parser_launch.add_argument("--window", '-w', type=str,
                                default="",
@@ -331,7 +335,7 @@ def main():
     parser_kill.add_argument("--window", '-w', type=str,
                              default="",
                              help="Window to be killed. Default: ALL")
-    parser_server = subparsers.add_parser('server', help='run web server')
+    subparsers.add_parser('server', help='run web server')
     parser_pids = subparsers.add_parser('pids', help='pids of processes')
     parser_pids.add_argument(
         "--window", '-w', type=str,
