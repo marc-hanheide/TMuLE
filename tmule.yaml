@@ -1,18 +1,36 @@
+# Name the session (can be overriden by command line option -s), optional
+session: test-session
+
+# init_cmd to run before launch in each window
 init_cmd: |
   export TMULE=1
   date
   sleep 1
+
+# definition of all windows
 windows: 
-  - name: date+sh
+  - name: date_sh
+    # windows can have tags, to selective launch only the ones with a given tag (-t option)
+    tags: [both]
     panes: 
+      # clever multiline commands:
       - |
         date
         bash -c "sh"
-    check: /bin/true
   - name: htop
+    # 'skip' is optional, but if true, the window is skipped for all commands effecting all windows
+    skip: true
     panes:
       - htop
+      - htop
   - name: test
+    # tags is a list of several tags, if no tags are defined, the window is always selected (unless it is skipped)
+    tags: [test, both]
     panes:
-    - echo $TMULE
-    - top
+    # tmule supports a few parameter substitutions, here a complete list (all parameters surrounded by '@'.
+    # these can be very useful to refer to file paths relative to the tmule file
+    - 'echo "The absolute path of the config file: @TMULE_CONFIG_FILE@"'
+    - 'echo "The absolute path to the directory of the config file: @TMULE_CONFIG_DIR@"'
+    - 'echo "The name of the tmux session: @TMULE_SESSION_NAME@"'
+    - 'find @TMULE_CONFIG_DIR@ -type f'
+    - htop

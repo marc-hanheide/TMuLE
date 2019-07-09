@@ -12,8 +12,10 @@ from subprocess import call
 from psutil import Process, wait_procs
 import sys
 from loader import Loader
-
+from threading import Thread
 from datetime import datetime
+from os.path import abspath, dirname
+
 basicConfig(level=INFO)
 
 sys.path.append(os.path.abspath(
@@ -23,32 +25,65 @@ sys.path.append(os.path.abspath(
 
 class TMux:
 
-    def __init__(self, session_name="tmule", configfile=None):
-        if configfile:
-            self.load_config(configfile)
+    def __init__(self, session_name=None, configfile=None, sleep_sec=1.0):
+        self.session_name = 'tmule'
+        self.configfile = configfile
+        if self.configfile:
+            self.load_config()
+            if 'session' in self.config:
+                self.session_name = self.config['session']
         else:
             self.config = None
-        self.session_name = session_name
+        if session_name:
+            self.session_name = session_name
+        self.sleep_sec = sleep_sec
 
     def _on_terminate(self, proc):
         info("process {} terminated with exit code {}"
              .format(proc, proc.returncode))
 
     def _terminate(self, pid):
-        procs = Process(pid).children()
+        procs = Process(pid).children(recursive=True)
         for p in procs:
+            info("trying to terminate %s" % p)
             p.terminate()
         gone, still_alive = wait_procs(procs, timeout=1,
                                        callback=self._on_terminate)
         for p in still_alive:
+            info("killing %s" % p)
             p.kill()
 
     def _get_children_pids(self, pid):
         return Process(pid).children(recursive=True)
 
-    def load_config(self, filename="sample_config.json"):
-        with open(filename) as data_file:
+    def var_substitute(self, root):
+        if type(root) == dict:
+            for d in root:
+                root[d] = self.var_substitute(root[d])
+        elif type(root) == list:
+            for l in range(0, len(root)):
+                root[l] = self.var_substitute(root[l])
+        elif type(root) == str:
+            for vs in self.var_dict:
+                root = root.replace(
+                    '@%s@' % vs,
+                    self.var_dict[vs])
+        return root
+
+    def load_config(self):
+        with open(self.configfile) as data_file:
             self.config = load(data_file, Loader)
+            self.var_dict = {
+                'TMULE_CONFIG_FILE': abspath(self.configfile),
+                'TMULE_CONFIG_DIR': dirname(abspath(self.configfile)),
+                'TMULE_SESSION_NAME': self.session_name
+            }
+            self.config = self.var_substitute(self.config)
+            self.known_tags = set([])
+            for w in self.config['windows']:
+                if 'tags' in w:
+                    for t in w['tags']:
+                        self.known_tags.add(t)
 
     def init(self):
         if not self.config:
@@ -120,13 +155,26 @@ class TMux:
             pane_no += 1
         winconf['_running'] = True
 
-    def launch_all_windows(self):
+    def launch_all_windows(self, tags=set([])):
         for winconf in self.config['windows']:
-            self.launch_window(winconf['name'])
+            selected = 'skip' not in winconf or not winconf['skip']
+            if selected and tags:
+                if 'tags' in winconf:
+                    selected = set(winconf['tags']).intersection(tags)
+                else:
+                    selected = False
+            if selected:
+                self.launch_window(winconf['name'])
+                sleep(self.sleep_sec)
 
-    def stop_all_windows(self):
+    def stop_all_windows(self, tags=set([])):
         for winconf in self.config['windows']:
-            self.stop_window(winconf['name'])
+            selected = 'skip' not in winconf or not winconf['skip']
+            if selected and tags:
+                if 'tags' in winconf:
+                    selected = set(winconf['tags']).intersection(tags)
+            if selected:
+                self.stop_window(winconf['name'])
 
     def get_children_pids_all_windows(self):
         pids = []
@@ -151,6 +199,14 @@ class TMux:
         winconf, window = self.find_window(window_name)
         self._stop_window(winconf, window)
 
+    def __pids_clean_up(self, pids):
+        sleep(1)
+        for p in pids:
+            try:
+                self._terminate(p)
+            except Exception as e:
+                info('exception in termination, can be ignored: %s' % str(e))
+
     def _stop_window(self, winconf, window):
         pane_no = 0
         for cmd in winconf['panes']:
@@ -159,9 +215,9 @@ class TMux:
             self.send_ctrlc(pane)
             pane_no += 1
         pids = self._get_pids_window(window)
-        sleep(.1)
-        for p in pids:
-            self._terminate(p)
+        Thread(target=self.__pids_clean_up, args=(pids,)).start()
+        #for p in pids:
+           #self._terminate(p)
         winconf['_running'] = False
 
     def kill_window(self, window_name):
@@ -170,8 +226,8 @@ class TMux:
 #                       "-F '#{pane_active} #{pane_pid}")
         self._stop_window(winconf, window)
         pids = self._get_pids_window(window)
-        for pid in pids:
-            Process(pid).terminate()
+        sleep(1)
+        Thread(target=self.__pids_clean_up, args=(pids,)).start()
         winconf['_running'] = False
 
     def list_windows(self):
@@ -240,7 +296,10 @@ class TMux:
                     path = '/'
 
                     def GET(self):
-                        return self_app._render.index(tmux_self.config)
+                        tmux_self.load_config()
+                        tmux_self.init()
+                        return self_app._render.index(
+                            tmux_self.config, tmux_self.known_tags)
 
                 class Log(self.page):
                     path = '/log'
@@ -264,11 +323,15 @@ class TMux:
                         tmux_self.launch_all_windows()
                     else:
                         tmux_self.launch_window(window_name)
+                elif cmd == 'launch-tag':
+                    tmux_self.launch_all_windows(tags=set([window_name]))
                 elif cmd == 'stop':
                     if window_name == '':
                         tmux_self.stop_all_windows()
                     else:
                         tmux_self.stop_window(window_name)
+                elif cmd == 'stop-tag':
+                    tmux_self.stop_all_windows(tags=set([window_name]))
                 elif cmd == 'terminate':
                         tmux_self.kill_all_windows()
                         sleep(1)
@@ -300,7 +363,8 @@ class TMux:
                 self.webserver, self.backend, s, f))
         self.webserver.start()
         self.backend.talker(port=9998)
-
+        # kill everything when server dies
+        self.kill_all_windows()
 
 def main():
     parser = argparse.ArgumentParser()
@@ -312,8 +376,12 @@ def main():
                         help="Should tmux be initialised? Default: True")
 
     parser.add_argument("--session", '-s', type=str,
-                        default='tmule',
-                        help="The session that is controlled. Default: tmule")
+                        default=None,
+                        help="The session that is controlled. "
+                        "Default: 'tmule'")
+    parser.add_argument("--wait", '-W', type=float,
+                         default=1,
+                         help="Seconds to wait between launching windows. Default: 1.0")
 
     subparsers = parser.add_subparsers(dest='cmd',
                                        help='sub-command help')
@@ -322,19 +390,31 @@ def main():
     parser_launch.add_argument("--window", '-w', type=str,
                                default="",
                                help="Window to be launched. Default: ALL")
+    parser_launch.add_argument("--tag", '-t',
+                               action='append',
+                               default=[],
+                               help="Tag of windows to be launched, "
+                               "can be repeated several times.")
     parser_stop = subparsers.add_parser('stop', help='stop windows(s)')
     parser_stop.add_argument("--window", '-w', type=str,
                              default="",
                              help="Window to be stopped. Default: ALL")
+    parser_stop.add_argument("--tag", '-t',
+                             action='append',
+                             default=[],
+                             help="Tag of windows to be stopped, "
+                             "can be repeated several times.")
     parser_relaunch = subparsers.add_parser('relaunch',
                                             help='relaunch windows(s)')
     parser_relaunch.add_argument("--window", '-w', type=str,
                                  default="",
                                  help="Window to be relaunched. Default: ALL")
-    parser_kill = subparsers.add_parser('terminate', help='kill window(s)')
-    parser_kill.add_argument("--window", '-w', type=str,
-                             default="",
-                             help="Window to be killed. Default: ALL")
+    parser_relaunch.add_argument("--tag", '-t',
+                                 action='append',
+                                 default=[],
+                                 help="Tag of windows to be relaunched, "
+                                 "can be repeated several times.")
+    subparsers.add_parser('terminate', help='kill window(s)')
     subparsers.add_parser('server', help='run web server')
     parser_pids = subparsers.add_parser('pids', help='pids of processes')
     parser_pids.add_argument(
@@ -350,7 +430,10 @@ def main():
 
     args = parser.parse_args()
 
-    tmux = TMux(session_name=args.session, configfile=args.config)
+    tmux = TMux(
+        session_name=args.session,
+        configfile=args.config,
+        sleep_sec=args.wait)
 
     if (args.init):
         tmux.init()
@@ -359,29 +442,26 @@ def main():
         print(pformat(tmux.list_windows()))
     elif args.cmd == 'launch':
         if args.window == '':
-            tmux.launch_all_windows()
+            tmux.launch_all_windows(tags=set(args.tag))
             pass
         else:
             tmux.launch_window(args.window)
     elif args.cmd == 'stop':
         if args.window == '':
-            tmux.stop_all_windows()
+            tmux.stop_all_windows(tags=set(args.tag))
         else:
             tmux.stop_window(args.window)
     elif args.cmd == 'relaunch':
         if args.window == '':
-            tmux.stop_all_windows()
+            tmux.stop_all_windows(tags=set(args.tag))
             sleep(1)
-            tmux.launch_all_windows()
+            tmux.launch_all_windows(tags=set(args.tag))
         else:
             tmux.stop_window(args.window)
             sleep(1)
             tmux.launch_window(args.window)
     elif args.cmd == 'terminate':
-        if args.window == '':
-            tmux.kill_all_windows()
-        else:
-            tmux.kill_window(args.window)
+        tmux.kill_all_windows()
     elif args.cmd == 'running':
         print tmux.is_running(args.window)
     elif args.cmd == 'server':

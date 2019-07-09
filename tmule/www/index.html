@@ -1,4 +1,4 @@
-$def with (config)
+$def with (config, known_tags)
 $var title: Dashboard
 $var jsfiles: 
 
@@ -33,8 +33,8 @@ function _update_status(payload) {
 
 </script>
 <div class="section">
-    <div class="container">
-        <div class="jumbotron">
+    <div class="container-fluid">
+        <div>
             <h1>TMuLE</h1> 
             <p>The TMux Launch Engine.</p> 
          </div>
@@ -46,31 +46,60 @@ function _update_status(payload) {
                         <h3 class="panel-title">All Windows</h3>
                     </div>
                     <div class="panel-body">
-                        <div class="btn-group-vertical" role="group">
-                            <button type="button" class="btn btn-lg btn-primary" 
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-primary" 
                                     onclick="check();">Check</button>
 
-                            <button type="button" class="btn btn-lg btn-success" 
+                            <button type="button" class="btn btn-sm btn-success" 
                                     onclick="send({
                                         'method':'button', 
                                         'id': '',
                                         'cmd': 'launch'
-                                        });">Launch All</button>
-                            <button type="button" class="btn-lg btn btn-danger" 
+                                        });">Launch</button>
+                            <button type="button" class="btn-sm btn btn-danger" 
                                     onclick="send({
                                         'method':'button', 
                                         'id': '',
                                         'cmd': 'stop'
-                                        });">Stop All</button>                        
+                                        });">Stop</button>                        
                         </div>
                     </div>
                 </div>
+                $for t in known_tags:
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">All with tag "$t"</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-success" 
+                                        onclick="send({
+                                            'method':'button', 
+                                            'id': '$t',
+                                            'cmd': 'launch-tag'
+                                            });">Launch</button>
+                                <button type="button" class="btn-sm btn btn-danger" 
+                                        onclick="send({
+                                            'method':'button', 
+                                            'id': '$t',
+                                            'cmd': 'stop-tag'
+                                            });">Stop</button>                        
+                            </div>
+                        </div>
+                    </div>
             </div>
             $for w in config["windows"]:
                 <div class="col-md-2">
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             <h3 class="panel-title">$w['name']</h3>
+                            <small><i>
+                                $if 'tags' in w: 
+                                    $', '.join(w['tags'])
+                                $else:
+                                    <br>
+                            </i></small>
+
                         </div>
                         <div id="$w['name']" style="background-color: #ccc;" class="panel-body">
                           <!-- <div class=""> -->
