@@ -190,7 +190,7 @@ class TMux:
                         sleep(loop * self.sleepCheckLoop)
                         #running = (call(winconf['check'], shell=True) == 0)
                         running = (call(
-                            check_cmd, shell=True, stdout=None,
+                            check_cmd, executable='/bin/bash', shell=True, stdout=None,
                             stdin=None) == 0)
                         info('ran check for %s (loop %d) => %s' % (
                             winconf['name'], loop, running))
@@ -299,7 +299,7 @@ class TMux:
                 check_cmd += self.config['init_cmd'] + '\n'
             check_cmd += winconf['check']
             running = (call(
-                check_cmd, shell=True, stdout=None,
+                check_cmd, executable='/bin/bash', shell=True, stdout=None,
                 stdin=None) == 0)
             return running
         else:

@@ -6,6 +6,7 @@ init_cmd: |
   export TMULE=1
   date
   sleep 1
+  echo $SHELL
 
 # definition of all windows
 windows: 
