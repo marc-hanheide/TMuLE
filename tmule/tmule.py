@@ -180,10 +180,18 @@ class TMux:
                     debug('need to run check command')
                     running = False
                     loop = 0
+                    check_cmd = '\n'
+                    if 'init_cmd' in self.config:
+                        check_cmd += self.config['init_cmd'] + '\n'
+                    check_cmd += winconf['check']
+
                     while not running and loop < self.maxCheckLoops:
                         loop += 1
                         sleep(loop * self.sleepCheckLoop)
-                        running = (call(winconf['check'], shell=True) == 0)
+                        #running = (call(winconf['check'], shell=True) == 0)
+                        running = (call(
+                            check_cmd, shell=True, stdout=None,
+                            stdin=None) == 0)
                         info('ran check for %s (loop %d) => %s' % (
                             winconf['name'], loop, running))
                     if loop >= self.maxCheckLoops:
