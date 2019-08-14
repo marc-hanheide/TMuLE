@@ -17,6 +17,16 @@ windows:
       - |
         date
         bash -c "sh"
+    wait: 2
+    check: /bin/true
+  - name: roscore
+    # windows can have tags, to selective launch only the ones with a given tag (-t option)
+    tags: [ros]
+    panes: 
+      # clever multiline commands:
+      - roscore
+    wait: 0
+    check: rostopic list
   - name: htop
     # 'skip' is optional, but if true, the window is skipped for all commands effecting all windows
     skip: true

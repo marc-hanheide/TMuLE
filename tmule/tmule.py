@@ -25,7 +25,7 @@ sys.path.append(os.path.abspath(
 
 class TMux:
 
-    def __init__(self, session_name=None, configfile=None, sleep_sec=1.0):
+    def __init__(self, session_name=None, configfile=None, sleep_sec=0.0):
         self.session_name = 'tmule'
         self.configfile = configfile
         if self.configfile:
@@ -37,6 +37,10 @@ class TMux:
         if session_name:
             self.session_name = session_name
         self.sleep_sec = sleep_sec
+        # max number of loops to wait for process to come up
+        self.maxCheckLoops = 16
+        # time to wait between checks (factor multiplied by loop)
+        self.sleepCheckLoop = 1
 
     def _on_terminate(self, proc):
         info("process {} terminated with exit code {}"
@@ -165,10 +169,32 @@ class TMux:
                     selected = False
             if selected:
                 self.launch_window(winconf['name'])
-                sleep(self.sleep_sec)
+                w = self.sleep_sec
+                if 'wait' in winconf:
+                    w = float(winconf['wait'])
+                if w > 0:
+                    info('sleep %f seconds after launch of %s' % (
+                        w, winconf['name']))
+                    sleep(w)
+                if 'check' in winconf:
+                    debug('need to run check command')
+                    running = False
+                    loop = 0
+                    while not running and loop < self.maxCheckLoops:
+                        loop += 1
+                        sleep(loop * self.sleepCheckLoop)
+                        running = (call(winconf['check'], shell=True) == 0)
+                        info('ran check for %s (loop %d) => %s' % (
+                            winconf['name'], loop, running))
+                    if loop >= self.maxCheckLoops:
+                        error(
+                            'window %s failed to come up in time, '
+                            'not continuing launch.'
+                            % winconf['name'])
+                        break
 
     def stop_all_windows(self, tags=set([])):
-        for winconf in self.config['windows']:
+        for winconf in self.config['windows'][::-1]:
             selected = 'skip' not in winconf or not winconf['skip']
             if selected and tags:
                 if 'tags' in winconf:
@@ -185,7 +211,7 @@ class TMux:
         return pids
 
     def kill_all_windows(self):
-        for winconf in self.config['windows']:
+        for winconf in self.config['windows'][::-1]:
             try:
                 self.kill_window(winconf['name'])
             except Exception as e:
@@ -380,7 +406,7 @@ def main():
                         help="The session that is controlled. "
                         "Default: 'tmule'")
     parser.add_argument("--wait", '-W', type=float,
-                         default=1,
+                         default=0.0,
                          help="Seconds to wait between launching windows. Default: 1.0")
 
     subparsers = parser.add_subparsers(dest='cmd',
