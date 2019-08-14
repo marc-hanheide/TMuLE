@@ -294,10 +294,14 @@ class TMux:
             return False
         if 'check' in winconf:
             debug('need to run check command')
-            if call(winconf['check'], shell=True) == 0:
-                return True
-            else:
-                return False
+            check_cmd = '\n'
+            if 'init_cmd' in self.config:
+                check_cmd += self.config['init_cmd'] + '\n'
+            check_cmd += winconf['check']
+            running = (call(
+                check_cmd, shell=True, stdout=None,
+                stdin=None) == 0)
+            return running
         else:
             return True
 
