@@ -108,3 +108,10 @@ Note: If you are using the default config file, you can obviously skip using the
 1. clean dist directory `rm -r dist/*`
 1. build dist `python setup.py sdist`
 1. upload `twine upload dist/*`
+
+
+# Turn into standalone Debian using fpm
+
+```
+fpm -s virtualenv -t deb --prefix /opt/tmule --name tmule_standalone tmule
+```
