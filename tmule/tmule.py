@@ -1,7 +1,9 @@
 #! /usr/bin/env python
+from __future__ import print_function, absolute_import
+
 from libtmux import Server
 from yaml import load
-from logging import error, warn, info, debug, basicConfig, INFO
+from logging import error, warning, info, debug, basicConfig, INFO
 from pprint import pformat
 from time import sleep
 import signal
@@ -11,7 +13,7 @@ import argparse
 from subprocess import call
 from psutil import Process, wait_procs
 import sys
-from loader import Loader
+from .loader import Loader
 from threading import Thread
 from datetime import datetime
 from os.path import abspath, dirname
@@ -223,7 +225,7 @@ class TMux:
             try:
                 self.kill_window(winconf['name'])
             except Exception as e:
-                warn(
+                warning(
                     'There was an exception shutting down, '
                     'carrying on regardless: %s' % str(e))
         self.server.kill_session(self.session_name)
@@ -362,14 +364,14 @@ class TMux:
                     else:
                         tmux_self.launch_window(window_name)
                 elif cmd == 'launch-tag':
-                    tmux_self.launch_all_windows(tags=set([window_name]))
+                    tmux_self.launch_all_windows(tags={window_name})
                 elif cmd == 'stop':
                     if window_name == '':
                         tmux_self.stop_all_windows()
                     else:
                         tmux_self.stop_window(window_name)
                 elif cmd == 'stop-tag':
-                    tmux_self.stop_all_windows(tags=set([window_name]))
+                    tmux_self.stop_all_windows(tags={window_name})
                 elif cmd == 'terminate':
                         tmux_self.kill_all_windows()
                         sleep(1)
@@ -473,7 +475,7 @@ def main():
         configfile=args.config,
         sleep_sec=args.wait)
 
-    if (args.init):
+    if args.init:
         tmux.init()
 
     if args.cmd == 'list':
@@ -501,7 +503,7 @@ def main():
     elif args.cmd == 'terminate':
         tmux.kill_all_windows()
     elif args.cmd == 'running':
-        print tmux.is_running(args.window)
+        print(tmux.is_running(args.window))
     elif args.cmd == 'server':
         tmux._server()
     elif args.cmd == 'pids':
