@@ -16,18 +16,6 @@ from loader import Loader
 from threading import Thread
 from datetime import datetime
 from os.path import abspath, dirname
-import web
-from web.httpserver import StaticMiddleware, StaticApp
-
-from autobahn.twisted.websocket import WebSocketServerProtocol, \
-    WebSocketServerFactory
-from autobahn.twisted.resource import WebSocketResource, WSGIRootResource
-
-from twisted.internet import reactor
-from twisted.web.server import Site
-from twisted.web.wsgi import WSGIResource
-from twisted.python import log
-from twisted.web.static import File
 
 basicConfig(level=INFO)
 
@@ -64,7 +52,7 @@ class TMux:
         for p in procs:
             info("trying to terminate %s" % p)
             p.terminate()
-        gone, still_alive = wait_procs(procs, timeout=1,
+        _, still_alive = wait_procs(procs, timeout=1,
                                        callback=self._on_terminate)
         for p in still_alive:
             info("killing %s" % p)
@@ -256,7 +244,7 @@ class TMux:
 
     def _stop_window(self, winconf, window):
         pane_no = 0
-        for cmd in winconf['panes']:
+        for _ in winconf['panes']:
             pane = window.select_pane('%s:%s.%d' % (
                 window.session.name, window.name, pane_no))
             self.send_ctrlc(pane)
@@ -290,7 +278,7 @@ class TMux:
         return [int(p) for p in r.stdout]
 
     def get_children_pids_window(self, window_name):
-        winconf, window = self.find_window(window_name)
+        _, window = self.find_window(window_name)
         return self._get_children_pids_window(window)
 
     def _get_children_pids_window(self, window):
@@ -318,11 +306,20 @@ class TMux:
         else:
             return True
 
-    def _server(self, port=9999):
-        import webnsock
-
-        print webnsock.__file__ 
+    def _server(self, port=9999, keepalive=True):
+        from ws_protocol import JsonWSProtocol
         import web
+        from web.httpserver import StaticMiddleware, StaticApp
+
+        from autobahn.twisted.websocket import WebSocketServerProtocol, \
+            WebSocketServerFactory
+        from autobahn.twisted.resource import WebSocketResource, WSGIRootResource
+
+        from twisted.internet import reactor
+        from twisted.web.server import Site
+        from twisted.web.wsgi import WSGIResource
+        from twisted.python import log
+        from twisted.web.static import File
 
         tmux_self = self
 
@@ -368,7 +365,7 @@ class TMux:
                             'capture-pane', '-p', '-C', '-S', '-100000').stdout
                         return '\n'.join(lines)
 
-        class TMuxWSProtocol(webnsock.JsonWSProtocol):
+        class TMuxWSProtocol(JsonWSProtocol):
 
             def __init__(self):
                 super(TMuxWSProtocol, self).__init__()
@@ -414,7 +411,7 @@ class TMux:
                 # return {'button_outcome': True}
 
         log.startLogging(sys.stdout)
-        wsFactory = WebSocketServerFactory(u"ws://127.0.0.1:9999")
+        wsFactory = WebSocketServerFactory()
         wsFactory.protocol = TMuxWSProtocol
         wsResource = WebSocketResource(wsFactory)
         staticResource = File(
@@ -443,7 +440,8 @@ class TMux:
 
         reactor.listenTCP(port, site)
         reactor.run()        # kill everything when server dies
-        self.kill_all_windows()
+        if not keepalive:
+            self.kill_all_windows()
 
 def main():
     parser = argparse.ArgumentParser()
@@ -494,7 +492,13 @@ def main():
                                  help="Tag of windows to be relaunched, "
                                  "can be repeated several times.")
     subparsers.add_parser('terminate', help='kill window(s)')
-    subparsers.add_parser('server', help='run web server')
+    parser_server = subparsers.add_parser('server', help='run web server')
+    parser_server.add_argument("--port", '-p', type=int,
+                                 default=9999,
+                                 help="Port to run the server on (default: 9999)")
+    parser_server.add_argument("--keepalive", '-k', action='store_true',
+                                 help="When quitting the server, shall the session be kept alive? (default: session terminated)")
+
     parser_pids = subparsers.add_parser('pids', help='pids of processes')
     parser_pids.add_argument(
         "--window", '-w', type=str,
@@ -544,7 +548,7 @@ def main():
     elif args.cmd == 'running':
         print tmux.is_running(args.window)
     elif args.cmd == 'server':
-        tmux._server()
+        tmux._server(args.port, args.keepalive)
     elif args.cmd == 'pids':
         if args.window == '':
             print(pformat(tmux.get_children_pids_all_windows()))
