@@ -6,6 +6,7 @@ from pprint import pformat
 from time import sleep
 import signal
 import os
+import sys
 from os import path
 import argparse
 from subprocess import call
@@ -15,6 +16,18 @@ from loader import Loader
 from threading import Thread
 from datetime import datetime
 from os.path import abspath, dirname
+import web
+from web.httpserver import StaticMiddleware, StaticApp
+
+from autobahn.twisted.websocket import WebSocketServerProtocol, \
+    WebSocketServerFactory
+from autobahn.twisted.resource import WebSocketResource, WSGIRootResource
+
+from twisted.internet import reactor
+from twisted.web.server import Site
+from twisted.web.wsgi import WSGIResource
+from twisted.python import log
+from twisted.web.static import File
 
 basicConfig(level=INFO)
 
@@ -305,21 +318,23 @@ class TMux:
         else:
             return True
 
-    def _server(self):
+    def _server(self, port=9999):
         import webnsock
+
+        print webnsock.__file__ 
         import web
 
         tmux_self = self
 
-        class TMuxWebServer(webnsock.WebServer):
+        class TMuxWebServer(web.auto_application):
 
             def __init__(self):
 
-                webnsock.WebServer.__init__(
+                web.auto_application.__init__(
                     self
                 )
 
-                self._render = web.template.render(
+                self._renderer = web.template.render(
                     path.realpath(
                         path.join(
                             path.dirname(__file__),
@@ -336,7 +351,13 @@ class TMux:
                     def GET(self):
                         tmux_self.load_config()
                         tmux_self.init()
-                        return self_app._render.index(
+                        ws_uri = '%s://%s%sws' % (
+                            'ws' if web.ctx['protocol'] == 'http' else 'wss',
+                            web.ctx['host'],
+                            web.ctx['fullpath']
+                        )
+                        return self_app._renderer.index(
+                            ws_uri,
                             tmux_self.config, tmux_self.known_tags)
 
                 class Log(self.page):
@@ -392,16 +413,36 @@ class TMux:
 
                 # return {'button_outcome': True}
 
-        self.webserver = webnsock.WebserverThread(TMuxWebServer(), port=9999)
-        self.backend = webnsock.WSBackend(TMuxWSProtocol)
+        log.startLogging(sys.stdout)
+        wsFactory = WebSocketServerFactory(u"ws://127.0.0.1:9999")
+        wsFactory.protocol = TMuxWSProtocol
+        wsResource = WebSocketResource(wsFactory)
+        staticResource = File(
+            path.realpath(
+                path.join(
+                    path.dirname(__file__),
+                    'www/static'
+                )
+            )            
+        )
 
-        signal.signal(
-            signal.SIGINT,
-            lambda s, f: webnsock.signal_handler(
-                self.webserver, self.backend, s, f))
-        self.webserver.start()
-        self.backend.talker(port=9998)
-        # kill everything when server dies
+        app = TMuxWebServer()
+
+        # create a Twisted Web WSGI resource for our Flask server
+        wsgiResource = WSGIResource(reactor, reactor.getThreadPool(), app.wsgifunc())
+
+        # create a root resource serving everything via WSGI/Flask, but
+        # the path "/ws" served by our WebSocket stuff
+        rootResource = WSGIRootResource(wsgiResource, {
+            b'ws': wsResource,
+            b'static': staticResource
+        })
+
+        # create a Twisted Web Site and run everything
+        site = Site(rootResource)
+
+        reactor.listenTCP(port, site)
+        reactor.run()        # kill everything when server dies
         self.kill_all_windows()
 
 def main():

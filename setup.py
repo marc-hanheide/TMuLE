@@ -20,7 +20,7 @@ setup(
     url='https://github.com/marc-hanheide/TMuLe',
     download_url='https://github.com/marc-hanheide/TMuLe/archive/%s.tar.gz'
         % VERSION,  # I'll explain this in a second
-    keywords=['webnsock', 'libtmux'],
+    keywords=['autobahn', 'twisted', 'libtmux'],
     classifiers=[],
     include_package_data=True,
     zip_safe=False

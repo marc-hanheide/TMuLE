@@ -44,4 +44,3 @@ windows:
     - 'echo "The absolute path to the directory of the config file: @TMULE_CONFIG_DIR@"'
     - 'echo "The name of the tmux session: @TMULE_SESSION_NAME@"'
     - 'find @TMULE_CONFIG_DIR@ -type f'
-    - htop
