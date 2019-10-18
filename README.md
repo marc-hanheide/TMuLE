@@ -105,7 +105,7 @@ Note: If you are using the default config file, you can obviously skip using the
     git commit -a && git tag `grep "VERSION =" setup.py | sed "s/VERSION = '\([0-9\.]*\)'/\1/"` 
     git push --tags
     ```
-1. clean dist directory `rm -r dist/*`
+1. clean dist directory `rm -r dist/* tmule.egg-info/`
 1. build dist `python setup.py sdist`
 1. upload `twine upload dist/*`
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 
-VERSION = '1.4.2'
+VERSION = '1.5.2'
 
 setup(
     name='tmule',
@@ -13,14 +13,14 @@ setup(
 		},
     #scripts=['tmule.py'],
     version=VERSION,
-    install_requires=['webnsock', 'libtmux', 'psutil', 'pyyaml'],
+    install_requires=['autobahn', 'twisted', 'libtmux', 'psutil', 'pyyaml'],
     description='The TMux Launch Engine',
     author='Marc Hanheide',
     author_email='marc@hanheide.net',
     url='https://github.com/marc-hanheide/TMuLe',
     download_url='https://github.com/marc-hanheide/TMuLe/archive/%s.tar.gz'
         % VERSION,  # I'll explain this in a second
-    keywords=['webnsock', 'libtmux'],
+    keywords=['autobahn', 'twisted', 'libtmux'],
     classifiers=[],
     include_package_data=True,
     zip_safe=False

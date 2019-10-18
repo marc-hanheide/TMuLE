@@ -1,11 +1,11 @@
-$def with (config, known_tags)
+$def with (ws_uri, config, known_tags)
 $var title: Dashboard
 $var jsfiles: 
 
 <script>
 document.onready = function() {
     var host_name = window.location.hostname;
-    uri = "ws://" + host_name + ":9998";
+    uri = "$ws_uri";
     webnsock_init(uri);
 }
 
