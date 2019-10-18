@@ -1,9 +1,11 @@
+from __future__ import print_function, absolute_import
+
 from subprocess import Popen, PIPE, list2cmdline
 import os
 import logging
-import exc
-import formats
-from _compat import console_to_str
+from . import exc
+from . import formats
+from ._compat import console_to_str
 from pprint import pprint
 from datetime import datetime
 
