@@ -309,7 +309,7 @@ class TMux:
             return True
 
     def _server(self, port=9999, keepalive=True):
-        from ws_protocol import JsonWSProtocol
+        from .ws_protocol import JsonWSProtocol
         import web
         from web.httpserver import StaticMiddleware, StaticApp
 
