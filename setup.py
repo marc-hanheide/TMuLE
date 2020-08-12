@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 
-VERSION = '1.5.4'
+VERSION = '1.5.5'
 
 setup(
     name='tmule',
@@ -18,8 +18,6 @@ setup(
     author='Marc Hanheide',
     author_email='marc@hanheide.net',
     url='https://github.com/marc-hanheide/TMuLe',
-    download_url='https://github.com/marc-hanheide/TMuLe/archive/%s.tar.gz'
-        % VERSION,  # I'll explain this in a second
     keywords=['autobahn', 'twisted', 'libtmux'],
     classifiers=[],
     include_package_data=True,
