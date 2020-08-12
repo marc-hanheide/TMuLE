@@ -13,7 +13,7 @@ setup(
 		},
     #scripts=['tmule.py'],
     version=VERSION,
-    install_requires=['autobahn', 'twisted', 'libtmux', 'psutil', 'pyyaml'],
+    install_requires=['autobahn', 'twisted', 'libtmux', 'psutil', 'pyyaml', 'web.py'],
     description='The TMux Launch Engine',
     author='Marc Hanheide',
     author_email='marc@hanheide.net',
