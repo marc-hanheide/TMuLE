@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 
-VERSION = '1.5.6'
+VERSION = '1.5.7'
 
 setup(
     name='tmule',
@@ -13,7 +13,7 @@ setup(
 		},
     #scripts=['tmule.py'],
     version=VERSION,
-    install_requires=['autobahn', 'twisted', 'libtmux', 'psutil', 'pyyaml', 'web.py'],
+    install_requires=['autobahn', 'twisted', 'libtmux==0.8.5', 'psutil', 'pyyaml', 'web.py'],
     description='The TMux Launch Engine',
     author='Marc Hanheide',
     author_email='marc@hanheide.net',
