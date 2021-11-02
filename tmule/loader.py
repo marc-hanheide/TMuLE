@@ -13,9 +13,12 @@ class Loader(yaml.SafeLoader):
 
     def include(self, node):
 
-        filename = os.path.join(self._root, self.construct_scalar(node))
+        data = []
+        for file in str(self.construct_scalar(node)).split(' '):
+            filename = os.path.join(self._root, file)
+            with open(filename, 'r') as f:
+                data += yaml.load(f, Loader)
+        return data
 
-        with open(filename, 'r') as f:
-            return yaml.load(f, Loader)
 
 Loader.add_constructor('!include', Loader.include)
