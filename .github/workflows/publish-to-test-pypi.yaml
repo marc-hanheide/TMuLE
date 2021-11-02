@@ -3,8 +3,8 @@ name: Publish Python 🐍 distributions 📦 to PyPI and TestPyPI
 on: push
 
 jobs:
-  build-n-publish:
-    name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
+  build-n-publish-py2:
+    name: Build and publish Python 2 🐍 distributions 📦 to PyPI and TestPyPI
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@master
@@ -12,6 +12,39 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 2.7
+    - name: Install pypa/build
+      run: >-
+        python -m
+        pip install
+        build
+        --user
+    - name: Build a binary wheel and a source tarball
+      run: >-
+        python -m
+        build
+        --sdist
+        --wheel
+        --outdir dist/
+        .
+    - name: Publish distribution 📦 to Test PyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        repository_url: https://test.pypi.org/legacy/
+    - name: Publish distribution 📦 to PyPI
+      if: startsWith(github.ref, 'refs/tags')
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+  build-n-publish-py3:
+    name: Build and publish Python 3 🐍 distributions 📦 to PyPI and TestPyPI
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@master
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.9
     - name: Install pypa/build
       run: >-
         python -m
