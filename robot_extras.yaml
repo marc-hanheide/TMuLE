@@ -3,7 +3,7 @@
     panes:
       - echo "roslaunch TODO sensors.launch
       - echo "rosparam load $(rospack find robot_config_package)/config/$ROBOT_ID/$ROBOT_ID_config.yaml"
-# manipulation
+# Extra sensors processing
   - name: sensor_fusion
     panes:
       - echo "roslaunch TODO sensor_fusion.launch prefix:=$ROBOT_ID"
