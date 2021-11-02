@@ -1,0 +1,3 @@
+init_cmd:
+  export ROBOT_ID="robot2"
+windows: !include robot.yaml robot_extras.yaml
