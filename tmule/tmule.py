@@ -570,5 +570,30 @@ def main():
     # tmux.terminate()
 
 
+def test_tmule_file():
+    tmux = TMux(
+        session_name="nose_test",
+        configfile='tmule.yaml',
+        sleep_sec=0)
+    tmux.init()
+    windows = tmux.list_windows()
+    assert('date_sh' in windows)
+    assert('roscore' in windows)
+    assert('htop' in windows)
+    assert('test' in windows)
+    tmux.kill_all_windows()
+
+def test_tmule_include():
+    tmux = TMux(
+        session_name="nose_test",
+        configfile='robot2.yaml',
+        sleep_sec=0)
+    tmux.init()
+    windows = tmux.list_windows()
+    assert('planning' in windows)
+    assert('sensor_fusion' in windows)
+    tmux.kill_all_windows()
+
+
 if __name__ == "__main__":
     main()
