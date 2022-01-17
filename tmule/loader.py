@@ -15,10 +15,12 @@ class Loader(yaml.SafeLoader):
 
         data = []
         for file in str(self.construct_scalar(node)).split(' '):
-            filename = os.path.join(self._root, file)
+            if (file[:1] == '$'):
+                filename = os.path.expandvars(file)
+            else:
+                filename = os.path.join(self._root, file)
             with open(filename, 'r') as f:
                 data += yaml.load(f, Loader)
         return data
-
 
 Loader.add_constructor('!include', Loader.include)
