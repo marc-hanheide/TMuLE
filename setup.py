@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 
-VERSION = '1.5.8'
+VERSION = '1.5.9'
 
 setup(
     name='tmule',
