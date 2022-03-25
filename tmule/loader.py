@@ -14,7 +14,7 @@ class Loader(yaml.SafeLoader):
     def include(self, node):
 
         data = []
-        for file in str(self.construct_scalar(node)).split(';'):
+        for file in str(self.construct_scalar(node)).split('; '):
             if (file[:1] == '$'):
                 filename = os.path.expandvars(os.popen("echo " + file).read()[:-1])
             else:
